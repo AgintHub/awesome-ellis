@@ -1,64 +1,62 @@
 dag_type: plain_text
-description: Generated workflow from UI.
-name: create_da_g
+description: A step‑by‑step workflow for creating a directed acyclic graph (DAG).
+name: dag_creation_process
 nodes:
-  create_da_g_edge:
+  create_edge:
     agent: false
-    description: Create a new edge between two nodes in the graph, specifying the
-      source and destination nodes.
-    name: create_da_g_edge
+    description: Add an edge that connects two existing nodes.
+    name: create_edge
+    nodes_depended_on:
+    - create_node
+    nodes_dependent_on:
+    - update_topology
+    prompt: Create a directed edge between two nodes, specifying source and destination.
+  create_node:
+    agent: false
+    description: Create a single node in the DAG.
+    name: create_node
     nodes_depended_on:
     - define_node_relationships
-    - define_node_attributes
     nodes_dependent_on:
-    - update_graph_topology
-    prompt: Create a new edge between two nodes in the graph.
-  create_da_g_node:
-    agent: false
-    description: Create a new node for the directed acyclic graph with a unique name
-      and description.
-    name: create_da_g_node
-    nodes_depended_on:
-    - define_node_attributes
-    - define_node_relationships
-    nodes_dependent_on:
-    - create_da_g_edge
-    prompt: Create a new node with a unique name and description.
+    - create_edge
+    prompt: Add a new node to the DAG using the attributes and relationships defined
+      earlier.
   define_node_attributes:
     agent: false
-    description: Define the attributes of each node in the graph, including name,
-      description, and relationships.
+    description: Define the essential attributes for every node that will appear in
+      the DAG.
     name: define_node_attributes
     nodes_depended_on: []
     nodes_dependent_on:
-    - create_da_g_node
-    prompt: Define the attributes of each node in the graph.
+    - define_node_relationships
+    prompt: Specify the unique name, description, and other properties for each node
+      you intend to add to the DAG.
   define_node_relationships:
     agent: false
-    description: Define the relationships between nodes in the graph, including parent-child
-      and sibling relationships.
+    description: Establish how nodes will be connected in the DAG structure.
     name: define_node_relationships
-    nodes_depended_on: []
-    nodes_dependent_on:
-    - create_da_g_node
-    prompt: Define the relationships between nodes in the graph.
-  update_graph_topology:
-    agent: false
-    description: Update the graph topology based on the newly created edges, ensuring
-      that the graph remains acyclic.
-    name: update_graph_topology
     nodes_depended_on:
-    - create_da_g_edge
+    - define_node_attributes
     nodes_dependent_on:
-    - validate_graph_structure
-    prompt: Update the graph topology based on the newly created edges.
-  validate_graph_structure:
+    - create_node
+    prompt: Determine parent‑child and sibling relationships among the nodes defined
+      previously.
+  update_topology:
     agent: false
-    description: Validate the structure of the graph to ensure that it is a valid
-      directed acyclic graph, including checks for cyclicity and node connectivity.
-    name: validate_graph_structure
+    description: Modify the DAG’s topology after adding an edge.
+    name: update_topology
     nodes_depended_on:
-    - update_graph_topology
+    - create_edge
+    nodes_dependent_on:
+    - validate_structure
+    prompt: Adjust the graph layout to reflect the new edge, ensuring acyclicity is
+      maintained.
+  validate_structure:
+    agent: false
+    description: Confirm the integrity of the final DAG.
+    name: validate_structure
+    nodes_depended_on:
+    - update_topology
     nodes_dependent_on: []
-    prompt: Validate the structure of the graph to ensure that it is a valid directed
-      acyclic graph.
+    prompt: Check that the graph remains a valid directed acyclic graph, verifying
+      no cycles and correct connectivity.
