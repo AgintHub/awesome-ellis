@@ -1,62 +1,60 @@
 dag_type: plain_text
-description: A step‑by‑step workflow for creating a directed acyclic graph (DAG).
-name: dag_creation_process
+description: Workflow to decide where to eat based on availability of meat and then
+  go to gym for exercise.
+name: eat_and_exercise_routine
 nodes:
-  create_edge:
+  check_meat_availability:
     agent: false
-    description: Add an edge that connects two existing nodes.
-    name: create_edge
+    description: Check if there is meat available at home.
+    name: check_meat_availability
     nodes_depended_on:
-    - create_node
+    - go_home
     nodes_dependent_on:
-    - update_topology
-    prompt: Create a directed edge between two nodes, specifying source and destination.
-  create_node:
+    - eat_at_home
+    - drive_to_mall
+    prompt: Determine if there is meat available at home. If yes, proceed to eating
+      at home; if no, proceed to drive to the mall.
+  drive_to_mall:
     agent: false
-    description: Create a single node in the DAG.
-    name: create_node
+    description: Drive to the mall because there is no meat at home.
+    name: drive_to_mall
     nodes_depended_on:
-    - define_node_relationships
+    - check_meat_availability
     nodes_dependent_on:
-    - create_edge
-    prompt: Add a new node to the DAG using the attributes and relationships defined
-      earlier.
-  define_node_attributes:
+    - eat_at_mall
+    prompt: Drive to the mall since there is no meat at home.
+  eat_at_home:
     agent: false
-    description: Define the essential attributes for every node that will appear in
-      the DAG.
-    name: define_node_attributes
+    description: Eat at home because meat is available.
+    name: eat_at_home
+    nodes_depended_on:
+    - check_meat_availability
+    nodes_dependent_on:
+    - go_to_gym
+    prompt: Eat meat at home as meat is available.
+  eat_at_mall:
+    agent: false
+    description: Eat at the mall after arriving there.
+    name: eat_at_mall
+    nodes_depended_on:
+    - drive_to_mall
+    nodes_dependent_on:
+    - go_to_gym
+    prompt: Eat at the mall after arriving there.
+  go_home:
+    agent: false
+    description: Go home first as the initial step.
+    name: go_home
     nodes_depended_on: []
     nodes_dependent_on:
-    - define_node_relationships
-    prompt: Specify the unique name, description, and other properties for each node
-      you intend to add to the DAG.
-  define_node_relationships:
+    - check_meat_availability
+    prompt: Go home as the starting point of the workflow.
+  go_to_gym:
     agent: false
-    description: Establish how nodes will be connected in the DAG structure.
-    name: define_node_relationships
+    description: Go to the gym to exercise regardless of where eating took place.
+    name: go_to_gym
     nodes_depended_on:
-    - define_node_attributes
-    nodes_dependent_on:
-    - create_node
-    prompt: Determine parent‑child and sibling relationships among the nodes defined
-      previously.
-  update_topology:
-    agent: false
-    description: Modify the DAG’s topology after adding an edge.
-    name: update_topology
-    nodes_depended_on:
-    - create_edge
-    nodes_dependent_on:
-    - validate_structure
-    prompt: Adjust the graph layout to reflect the new edge, ensuring acyclicity is
-      maintained.
-  validate_structure:
-    agent: false
-    description: Confirm the integrity of the final DAG.
-    name: validate_structure
-    nodes_depended_on:
-    - update_topology
+    - eat_at_home
+    - eat_at_mall
     nodes_dependent_on: []
-    prompt: Check that the graph remains a valid directed acyclic graph, verifying
-      no cycles and correct connectivity.
+    prompt: Go to the gym for exercise after eating.
