@@ -1,84 +1,11 @@
 dag_type: plain_text
-description: A detailed workflow for creating a directed acyclic graph (DAG) from
-  basic design and node definitions through connection, validation, and final output.
-name: create_dag_workflow
+description: Produces the Chinese character you.
+name: output_chinese_you
 nodes:
-  define_dag_objective:
+  generate_you_character:
     agent: false
-    description: Clarify and specify the purpose and scope of the DAG to be created.
-    name: define_dag_objective
+    description: Generate the Chinese character you.
+    name: generate_you_character
     nodes_depended_on: []
-    nodes_dependent_on:
-    - list_all_nodes
-    - define_node_connection_rules
-    prompt: State clearly the purpose and scope of the DAG that needs to be created.
-      Specify the main goal and any constraints or domain considerations.
-  define_node_connection_rules:
-    agent: false
-    description: Specify rules and constraints for connections between nodes to ensure
-      acyclicity and valid flow.
-    name: define_node_connection_rules
-    nodes_depended_on:
-    - define_dag_objective
-    - list_all_nodes
-    nodes_dependent_on:
-    - establish_node_dependencies
-    prompt: Define explicit rules on how nodes can be connected. Include constraints
-      forbidding cycles, define permissible dependency directions, and specify how
-      nodes pass information to dependents.
-  define_node_properties:
-    agent: false
-    description: Assign properties and metadata to each node, such as name and description.
-    name: define_node_properties
-    nodes_depended_on:
-    - list_all_nodes
-    nodes_dependent_on:
-    - establish_node_dependencies
-    prompt: For each node listed, define its properties including a concise descriptive
-      name and a one-sentence description of the node's function.
-  establish_node_dependencies:
-    agent: false
-    description: Determine dependencies between nodes based on their roles, ensuring
-      a directed acyclic graph structure.
-    name: establish_node_dependencies
-    nodes_depended_on:
-    - define_node_properties
-    - define_node_connection_rules
-    nodes_dependent_on:
-    - validate_dag_structure
-    prompt: Establish connections from each node to its dependent nodes, listing the
-      names of nodes it depends on and that depend on it, ensuring no cycles and proper
-      directionality.
-  list_all_nodes:
-    agent: false
-    description: Enumerate all the nodes (tasks or steps) that will exist in the DAG.
-    name: list_all_nodes
-    nodes_depended_on:
-    - define_dag_objective
-    nodes_dependent_on:
-    - define_node_properties
-    - define_node_connection_rules
-    prompt: Based on the DAG objective, list out all distinct nodes with unique identifiers
-      that will make up the DAG. Each node represents a single task.
-  output_dag_definition:
-    agent: false
-    description: Compile and present the final DAG definition with all nodes, dependencies,
-      descriptions, and prompts.
-    name: output_dag_definition
-    nodes_depended_on:
-    - validate_dag_structure
     nodes_dependent_on: []
-    prompt: Produce the complete Directed Acyclic Graph definition in JSON format
-      listing nodes, their dependencies, descriptions, prompts, and agent flags.
-  validate_dag_structure:
-    agent: false
-    description: Verify that the DAG meets the acyclicity and connectivity requirements
-      and all dependencies are consistent.
-    name: validate_dag_structure
-    nodes_depended_on:
-    - establish_node_dependencies
-    nodes_dependent_on:
-    - output_dag_definition
-    prompt: Check that the graph is strictly acyclic with no circular dependencies,
-      all nodes are connected in one component, and dependencies flow forward without
-      loopbacks.
+    prompt: Generate the Chinese character '你' as the sole output.
