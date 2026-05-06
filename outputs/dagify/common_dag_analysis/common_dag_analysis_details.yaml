@@ -1,0 +1,47 @@
+dag_type: plain_text
+description: Analyze and describe a typical Directed Acyclic Graph (DAG) covering
+  common features, components, and examples.
+name: common_dag_analysis
+nodes:
+  define_dag:
+    agent: false
+    description: Provide a clear definition of what a DAG (Directed Acyclic Graph)
+      is.
+    name: define_dag
+    nodes_depended_on: []
+    nodes_dependent_on:
+    - list_dag_characteristics
+    - give_dag_common_use_cases
+    - explain_dag_components
+    prompt: Define what a Directed Acyclic Graph (DAG) is. Explain the meaning of
+      'directed' and 'acyclic' in this context.
+  explain_dag_components:
+    agent: false
+    description: Describe the basic components of a DAG including nodes (vertices)
+      and edges, and how they relate to each other.
+    name: explain_dag_components
+    nodes_depended_on:
+    - define_dag
+    nodes_dependent_on: []
+    prompt: Explain the fundamental components that make up a Directed Acyclic Graph,
+      focusing on nodes and directed edges and their relationships.
+  give_dag_common_use_cases:
+    agent: false
+    description: Provide examples of common real-world and computational use cases
+      for DAGs.
+    name: give_dag_common_use_cases
+    nodes_depended_on:
+    - define_dag
+    nodes_dependent_on: []
+    prompt: List common use cases for Directed Acyclic Graphs including scheduling,
+      data processing pipelines, version control history, blockchain, and dependency
+      resolution.
+  list_dag_characteristics:
+    agent: false
+    description: List the key characteristics and properties of a DAG.
+    name: list_dag_characteristics
+    nodes_depended_on:
+    - define_dag
+    nodes_dependent_on: []
+    prompt: Enumerate the main characteristics of a Directed Acyclic Graph, such as
+      lack of cycles, directionality of edges, and topological ordering possibilities.
