@@ -1,107 +1,155 @@
 dag_type: plain_text
-description: A step‑by‑step, technically detailed guide that explains DAG concepts,
-  enumerates tooling, identifies core components, outlines creation process with validation,
-  and provides reference resources.
-name: create_dag_workflow_and_find_references_detailed
+description: Creates the expected document title for the current analysis period,
+  checks for an existing document in the AI‑cases‑排查 directory, and if not present
+  reads the previous period's document to extract baseline metrics.
+name: gap_monitor_analysis_workflow
 nodes:
-  define_dag_concept:
+  compute_date_range:
     agent: false
-    description: Explain the formal definition of a Directed Acyclic Graph (DAG),
-      its mathematical properties (directed edges, absence of cycles, partial order),
-      and why these properties matter for workflow orchestration.
-    name: define_dag_concept
+    description: Calculate the current analysis period dates (t‑8 to t‑2) and format
+      them as MM.DD‑MM.DD.
+    name: compute_date_range
     nodes_depended_on: []
     nodes_dependent_on:
-    - identify_dag_component_elements
-    - list_dag_creation_use_cases
-    prompt: Provide a concise technical definition of a Directed Acyclic Graph (DAG).
-      Mention its representation as G = (V, E) with V as vertices and E as directed
-      edges, the requirement that G contains no directed cycles, and how this yields
-      a partial order useful for scheduling tasks in pipelines.
-  enumerate_tools_and_references:
+    - generate_document_title
+    prompt: Using the current date, compute the start date as 8 days ago and the end
+      date as 2 days ago. Output the range in the format "MM.DD‑MM.DD".
+  extract_baseline_metrics:
     agent: false
-    description: List concrete platforms, libraries, and documentation sources where
-      validated DAG examples and best‑practice guides can be found.
-    name: enumerate_tools_and_references
+    description: Parse the previous period document (if any) and extract required
+      fields from the "一、整体趋势" table.
+    name: extract_baseline_metrics
     nodes_depended_on:
-    - validate_acyclicity
+    - fetch_previous_content
+    - fallback_personal_search
     nodes_dependent_on:
-    - summarize_dag_creation_guide
-    prompt: 'Provide a curated list of DAG tooling and reference material, including:
-      • Apache Airflow (official docs, GitHub examples) • Prefect (API reference,
-      community flows) • Luigi (tutorials, code snippets) • Dagster (type‑safe pipelines)
-      • Open‑source repositories on GitHub tagged with ''dag'' • Academic papers on
-      DAG scheduling algorithms.'
-  identify_dag_component_elements:
+    - final_output
+    prompt: 'From the document JSON (if present), locate the table titled "一、整体趋势"
+      and extract:
+
+      - 上一期日期范围
+
+      - 感知GTV、抓取GTV、Gap GTV、召回率
+
+      - 各产品形态召回率（如有）
+
+      - 各战区召回率（如有）
+
+      If no document is available, set a flag `no_baseline=true` and note that baseline
+      data is missing.'
+  fallback_personal_search:
     agent: false
-    description: 'Detail the atomic elements of a DAG workflow: tasks as nodes, dependency
-      edges, and essential properties such as atomicity, idempotence, and explicit
-      acyclicity checks.'
-    name: identify_dag_component_elements
+    description: If no prior document was found in the folder, search the user's root
+      directory for the latest matching document.
+    name: fallback_personal_search
     nodes_depended_on:
-    - define_dag_concept
+    - read_previous_document
     nodes_dependent_on:
-    - outline_basic_dag_creation_process
-    prompt: 'List and technically describe each core component of a DAG workflow:
-      • Task/node – an indivisible unit of work with a unique identifier and optional
-      metadata. • Edge – a directed dependency indicating that the target node cannot
-      start before the source completes. • Properties – atomic execution, idempotent
-      behavior, and the guarantee that the graph remains acyclic. Include brief examples
-      of how these are expressed in code (e.g., Airflow Operators, Prefect Tasks).'
-  list_dag_creation_use_cases:
+    - extract_baseline_metrics
+    prompt: 'Execute:
+
+      ```
+
+      oa-skills citadel listChildren --mis <用户MIS>
+
+      ```
+
+      Search the returned list for the newest document whose title contains "感知-抓取Gap监控分析".
+      Return its `contentId` and, if found, fetch its content with the same `getDocument`
+      command as above.'
+  fetch_previous_content:
     agent: false
-    description: Enumerate typical, technically oriented use cases for DAGs, focusing
-      on concrete pipeline scenarios and required performance characteristics.
-    name: list_dag_creation_use_cases
+    description: Retrieve the full content of the previous period document using its
+      contentId.
+    name: fetch_previous_content
     nodes_depended_on:
-    - define_dag_concept
+    - read_previous_document
     nodes_dependent_on:
-    - outline_basic_dag_creation_process
-    prompt: 'Provide a bullet‑list of real‑world DAG applications, such as: • ETL
-      pipelines with data extraction, transformation, and load stages. • Machine‑learning
-      model training workflows with feature engineering, training, validation, and
-      deployment steps. • CI/CD pipelines where build, test, and deploy jobs have
-      strict ordering. • Periodic batch jobs that need maximum concurrency while respecting
-      data dependencies.'
-  outline_basic_dag_creation_process:
+    - extract_baseline_metrics
+    - fallback_personal_search
+    prompt: 'If a `contentId` was obtained, run:
+
+      ```
+
+      oa-skills citadel getDocument --mis <用户MIS> --contentId <contentId>
+
+      ```
+
+      Return the document JSON. If `contentId` is empty, skip this step.'
+  final_output:
     agent: false
-    description: Present a detailed, ordered procedure for constructing a DAG, from
-      task enumeration to dependency mapping and concurrency planning.
-    name: outline_basic_dag_creation_process
+    description: 'Produce the final result: the generated title and either the extracted
+      baseline metrics or a warning if none were found.'
+    name: final_output
     nodes_depended_on:
-    - identify_dag_component_elements
-    - list_dag_creation_use_cases
-    nodes_dependent_on:
-    - validate_acyclicity
-    prompt: 'Write a step‑by‑step guide: 1) Enumerate all atomic tasks and assign
-      identifiers. 2) For each task, specify required upstream tasks. 3) Build the
-      adjacency list or matrix representing edges. 4) Perform a topological sort to
-      verify ordering and expose parallelizable branches. 5) Document concurrency
-      limits and resource requirements per task.'
-  summarize_dag_creation_guide:
-    agent: false
-    description: Combine all previous outputs into a concise, actionable guide that
-      a practitioner can follow to design, validate, and locate examples of DAG workflows.
-    name: summarize_dag_creation_guide
-    nodes_depended_on:
-    - enumerate_tools_and_references
+    - idempotent_check
+    - extract_baseline_metrics
     nodes_dependent_on: []
-    prompt: 'Synthesize a final guide that: 1) Recaps the DAG definition and component
-      details. 2) Summarizes the creation process with validation steps. 3) Highlights
-      concurrency considerations from the topological sort. 4) Lists the tooling and
-      reference resources. Present the guide in clear sections with code snippets
-      where appropriate.'
-  validate_acyclicity:
+    prompt: 'If `skip_remaining` is true, output the message from `idempotent_check`
+      and stop.
+
+      Otherwise, output:
+
+      ```
+
+      标题: <generated title>
+
+
+      基准数据:
+
+      <extracted metrics or warning>
+
+      ```'
+  generate_document_title:
     agent: false
-    description: Apply a technical algorithm (e.g., depth‑first search cycle detection
-      or Kahn's algorithm) to ensure the constructed graph contains no cycles, and
-      output diagnostics if cycles are found.
-    name: validate_acyclicity
+    description: Build the expected document title using the calculated date range.
+    name: generate_document_title
     nodes_depended_on:
-    - outline_basic_dag_creation_process
+    - compute_date_range
     nodes_dependent_on:
-    - enumerate_tools_and_references
-    prompt: Given the adjacency representation from the previous step, run Kahn's
-      algorithm to attempt a topological ordering. If the ordering succeeds, confirm
-      the graph is acyclic. If it fails, list the nodes involved in the cycle and
-      suggest minimal edge removals to break it.
+    - list_directory_children
+    prompt: Insert the date range from the previous step into the template "感知-抓取Gap监控分析（<range>）"
+      and output the full title string.
+  idempotent_check:
+    agent: false
+    description: Determine whether a document with the expected title already exists;
+      if so, terminate the workflow.
+    name: idempotent_check
+    nodes_depended_on:
+    - list_directory_children
+    - generate_document_title
+    nodes_dependent_on:
+    - read_previous_document
+    prompt: Parse the output from `list_directory_children`. If any child's title
+      exactly matches the title from `generate_document_title`, output the message
+      "今日已发布，跳过" and set a flag `skip_remaining=true`. Otherwise set `skip_remaining=false`.
+  list_directory_children:
+    agent: false
+    description: Run the citadel command to list child documents under the 【AI - cases排查】
+      folder.
+    name: list_directory_children
+    nodes_depended_on:
+    - generate_document_title
+    nodes_dependent_on:
+    - idempotent_check
+    prompt: 'Execute the command:
+
+      ```
+
+      oa-skills citadel listChildren --mis <用户MIS> --parentId 2748397739
+
+      ```
+
+      Return the raw command output (JSON or text).'
+  read_previous_document:
+    agent: false
+    description: When no current document exists, locate the most recent prior period
+      document and retrieve its contentId.
+    name: read_previous_document
+    nodes_depended_on:
+    - idempotent_check
+    nodes_dependent_on:
+    - fetch_previous_content
+    prompt: From the list obtained in `list_directory_children`, find the latest document
+      whose title contains "感知-抓取Gap监控分析" but whose date range differs from the current
+      one. Return its `contentId`. If none is found, leave `contentId` empty.
